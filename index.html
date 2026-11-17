@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Transferencia de Movimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Mismo sistema de diseño del programa de escritorio (transporte/ui/theme.py):
+   azules tranquilos, neutros suaves, esquinas rectas, sin sombras.
+   Layout: pestañas de problema arriba; datos a la izquierda y resultado a la derecha (una columna en celular). */
+:root{
+  --fondo:#F7F9FA; --superficie:#E6EEF4; --separador:#D6E0E7; --borde-control:#73838E;
+  --texto:#1E2D3D; --texto-sec:#5C6B73; --texto-des:#A6AFB7;
+  --acento:#2E698E; --acento-hover:#1B587C; --sobre-acento:#FFFFFF;
+  --ok:#556A4E; --aviso:#876125; --error:#A34A3D; --foco:#2E698E;
+  --g0:#2E698E; --g1:#AD8440; --g2:#7C9574; --g3:#1E2D3D;
+  --serif:"Source Serif 4",Georgia,serif;
+  --sans:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Source Code Pro","DejaVu Sans Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --fondo:#0F172A; --superficie:#1E293B; --separador:#303B4D; --borde-control:#6D7889;
+    --texto:#F1F5F9; --texto-sec:#94A3B8; --texto-des:#596475;
+    --acento:#84BCE2; --acento-hover:#9DCEF0; --sobre-acento:#0F172A;
+    --ok:#A8BBA2; --aviso:#E2B774; --error:#EBA295; --foco:#84BCE2;
+    --g0:#84BCE2; --g1:#E2B774; --g2:#A8BBA2; --g3:#94A3B8;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --fondo:#0F172A; --superficie:#1E293B; --separador:#303B4D; --borde-control:#6D7889;
+  --texto:#F1F5F9; --texto-sec:#94A3B8; --texto-des:#596475;
+  --acento:#84BCE2; --acento-hover:#9DCEF0; --sobre-acento:#0F172A;
+  --ok:#A8BBA2; --aviso:#E2B774; --error:#EBA295; --foco:#84BCE2;
+  --g0:#84BCE2; --g1:#E2B774; --g2:#A8BBA2; --g3:#94A3B8;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;border-radius:0}
+html{background:var(--fondo)}
+body{margin:0;background:var(--fondo);color:var(--texto);font-family:var(--sans);font-size:18px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:1180px;margin:0 auto;padding-block:0 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-block:28px 14px;border-bottom:1px solid var(--separador);flex-wrap:wrap}
+h1{font-family:var(--serif);font-weight:600;margin:0;line-height:1.15;font-size:clamp(28px,5vw,44px);text-wrap:balance}
+.sub{font-size:20px;margin:6px 0 0;color:var(--texto-sec)}
+.label{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-sec)}
+button{font:inherit;font-weight:600;font-size:17px;min-height:44px;padding:8px 16px;cursor:pointer;border:1px solid var(--separador);background:var(--superficie);color:var(--texto)}
+button:hover{border-color:var(--borde-control)}
+button.primary{background:var(--acento);color:var(--sobre-acento);border-color:var(--acento)}
+button.primary:hover{background:var(--acento-hover);border-color:var(--acento-hover)}
+button[aria-selected="true"]{background:var(--acento);color:var(--sobre-acento);border-color:var(--acento)}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;margin-top:20px}
+@media(min-width:900px){main{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
+section{min-width:0}
+form{background:var(--superficie);border:1px solid var(--separador);padding:20px;margin-top:10px;display:grid;gap:16px}
+.field{display:grid;gap:4px;min-width:0}
+.field>label{font-weight:600;font-size:17px}
+.hint{font-size:14px;color:var(--texto-sec)}
+.row{display:flex;gap:8px;align-items:center;min-width:0}
+input,select{font:inherit;font-size:17px;color:var(--texto);background:var(--fondo);border:1px solid var(--borde-control);padding:8px 10px;min-height:44px;min-width:0}
+input{width:100%;flex:1 1 auto;font-variant-numeric:tabular-nums}
+select{flex:0 0 auto}
+select.full{width:100%}
+.unit{flex:0 0 auto;font-size:15px;color:var(--texto-sec);min-width:44px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.empty{color:var(--texto-sec);border:1px solid var(--separador);padding:20px;margin-top:10px}
+.error-box{margin-top:10px;padding:14px 16px;border:1px solid var(--error);color:var(--error);font-weight:600}
+.chart{margin-top:10px;border:1px solid var(--separador);background:var(--fondo);padding:12px 12px 4px}
+.chart-title{font-weight:600;font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:4px;font-size:14px;color:var(--texto-sec)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:10px;height:10px}
+.chart svg{display:block;width:100%;height:auto;margin-top:4px}
+.res{border-top:1px solid var(--separador);padding-block:12px}
+.res:first-child{border-top:0}
+.big{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,38px);color:var(--acento);line-height:1.2;font-variant-numeric:tabular-nums}
+.also{font-weight:600;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-weight:600;font-size:14px;padding:2px 8px;border:1px solid currentColor;vertical-align:middle;margin-left:8px}
+.ok{color:var(--ok)} .warn{color:var(--aviso)}
+.aviso{margin-top:8px;color:var(--aviso);font-weight:600}
+.step{border-top:1px solid var(--separador);padding-block:12px}
+.step h3{margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-sec)}
+.eq{font-family:var(--mono);font-size:15px;line-height:1.6;overflow-x:auto;white-space:pre;padding-block:2px;font-variant-numeric:tabular-nums}
+.note{font-size:14px;color:var(--texto-sec);margin-top:8px}
+footer{margin-top:40px;padding-top:12px;border-top:1px solid var(--separador);font-size:14px;color:var(--texto-sec)}
+@media(max-width:520px){body{font-size:17px} form{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Transferencia de cantidad de movimiento</h1>
+    <p class="sub" id="subtitulo"></p>
+  </div>
+  <button type="button" id="tema">Tema oscuro</button>
+</header>
+
+<nav class="tabs" id="tabs" role="tablist" aria-label="Problemas"></nav>
+
+<main>
+  <section aria-labelledby="t-datos">
+    <div class="label" id="t-datos">Datos del problema</div>
+    <form id="form" novalidate></form>
+  </section>
+  <section aria-labelledby="t-res" aria-live="polite">
+    <div class="label" id="t-res">Resultado y pasos</div>
+    <div id="salida"></div>
+  </section>
+</main>
+
+<footer>Versión para celular del programa TransferenciaMovimiento. Hace los mismos cálculos que el .exe y funciona sin internet.</footer>
+</div>
+
+<script>
+/*CORE-START*/
+/* ===== Lógica (traducción directa del paquete Python `transporte`) ===== */
+class ValidationError extends Error {}
+
+/* core/formatting.py — formato con cifras significativas, igual que Python */
+function pyG(x, p) {                       // equivalente a f"{x:.{p}g}"
+  if (x === 0) return "0";
+  if (!isFinite(x)) return String(x);
+  const [m, e] = x.toExponential(p - 1).split("e"); const ex = +e;
+  const strip = s => s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s;
+  if (ex < -4 || ex >= p) return strip(m) + "e" + (ex < 0 ? "-" : "+") + String(Math.abs(ex)).padStart(2, "0");
+  return strip(x.toFixed(Math.max(0, p - 1 - ex)));
+}
+const SUP = {"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+function fmt(x, digits = 4) {
+  if (x === 0) return "0";
+  const a = Math.abs(x);
+  if (a >= 1e-2 && a < 1e5) return pyG(x, digits);
+  const [m, e] = x.toExponential(digits - 1).split("e");
+  return m + "×10" + String(parseInt(e, 10)).replace(/[-0-9]/g, c => SUP[c]);
+}
+
+/* core/errors.py */
+function percentError(calc, exp) {
+  if (exp === 0) throw new ValidationError("el valor experimental no puede ser cero.");
+  return Math.abs(calc - exp) / Math.abs(exp) * 100;
+}
+
+/* core/units.py — base = valor·escala + desplazamiento; la primera unidad es la predeterminada */
+const GROUPS = {
+  temperatura: {"°C": [1, 273.15], "K": [1, 0]},
+  longitud: {"m": [1, 0], "cm": [0.01, 0], "mm": [0.001, 0]},
+  viscosidad: {"μP": [1e-7, 0], "P": [0.1, 0], "cP": [1e-3, 0], "Pa·s": [1, 0]},
+  esfuerzo: {"Pa": [1, 0], "kPa": [1e3, 0]},
+  gradiente: {"Pa/m": [1, 0], "kPa/m": [1e3, 0]},
+};
+const unitsOf = g => Object.keys(GROUPS[g]);
+function toBase(g, value, unit) {
+  const u = GROUPS[g][unit];
+  if (!u) throw new ValidationError(`unidad desconocida: ${unit}.`);
+  return value * u[0] + u[1];
+}
+
+/* core/chart_math.py */
+function niceTicks(lo, hi, target = 5) {
+  if (hi === lo) hi = lo + (Math.abs(lo) || 1);
+  const raw = (hi - lo) / Math.max(target, 1);
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw);
+  const start = Math.floor(lo / step) * step;
+  const n = Math.ceil((hi - start) / step - 1e-9) + 1;
+  return Array.from({length: n}, (_, i) => parseFloat((start + i * step).toFixed(12)));
+}
+
+/* core/collision_integral.py */
+const [A, B, C, D, E, F] = [1.16145, 0.14874, 0.52487, 0.77320, 2.16178, 2.43787];
+const base = ts => A / ts ** B + C / Math.exp(D * ts) + E / Math.exp(F * ts);
+const METHODS = {
+  examen: {label: "Ec. 11.3 con 4.º término (como en el examen)",
+    formula: "Ωμ = 1.16145/(T*)^0.14874 + 0.52487/e^(0.77320·T*) + 2.16178/e^(2.43787·T*) − 0.0006435·(T*)^0.14874",
+    compute: ts => base(ts) - 6.435e-4 * ts ** B},
+  tres: {label: "Ec. 11.3 de 3 términos (compendio)",
+    formula: "Ωμ = 1.16145/(T*)^0.14874 + 0.52487/e^(0.77320·T*) + 2.16178/e^(2.43787·T*)",
+    compute: ts => base(ts)},
+  neufeld: {label: "Neufeld completa (con término seno)",
+    formula: "Ωμ = Ec. 11.3 − 0.0006435·(T*)^0.14874·sen(18.0323·(T*)^−0.7683 − 7.27371)",
+    compute: ts => base(ts) - 6.435e-4 * ts ** B * Math.sin(18.0323 * ts ** -0.76830 - 7.27371)},
+};
+
+/* data/substances.py — tabla 11.1: nombre, M (g/mol), σ (Å), ε/k (K) */
+const SUBSTANCES = [
+  ["Agua", 18.015, 2.641, 809.1], ["Aire", 28.97, 3.711, 78.6], ["Argón", 39.948, 3.542, 93.3],
+  ["Benceno", 78.11, 5.349, 412.3], ["Cloroformo", 119.38, 5.389, 340.2],
+  ["Dióxido de carbono", 44.01, 3.941, 195.2], ["Etano", 30.07, 4.443, 215.7], ["Etanol", 46.07, 4.53, 362.6],
+  ["Helio", 4.003, 2.551, 10.22], ["Hidrógeno", 2.016, 2.827, 59.7], ["Metano", 16.043, 3.758, 148.6],
+  ["Metanol", 32.04, 3.626, 481.8], ["Monóxido de carbono", 28.01, 3.69, 91.7],
+  ["Nitrógeno", 28.014, 3.798, 71.4], ["Oxígeno", 31.998, 3.467, 106.7],
+];
+
+/* domain/problem.py — Template Method: validar y convertir, luego compute() */
+const field = (key, label, o = {}) => ({key, label, hint: "", unit: "", unitGroup: null, choices: [],
+  optional: false, positive: true, ...o});
+const raw = (text = "", unit = "") => ({text, unit});
+const NUMBER = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+
+function parse(problem, rawMap) {
+  const values = {};
+  for (const f of problem.fields) {
+    const entry = rawMap[f.key] || raw();
+    const text = String(entry.text ?? "").trim().replaceAll(",", ".");
+    if (f.choices.length) { values[f.key] = text || f.choices[0][0]; continue; }
+    if (text === "") {
+      if (f.optional) { values[f.key] = null; continue; }
+      throw new ValidationError(`falta «${f.label}».`);
+    }
+    if (!NUMBER.test(text)) throw new ValidationError(`«${f.label}» no es un número válido.`);
+    let number = parseFloat(text);
+    if (f.unitGroup) number = toBase(f.unitGroup, number, entry.unit || unitsOf(f.unitGroup)[0]);
+    if (f.positive && number <= 0) throw new ValidationError(`«${f.label}» debe ser mayor que cero.`);
+    values[f.key] = number;
+  }
+  return values;
+}
+function comparison(problem, calc, exp, unit) {
+  const err = percentError(calc, exp);
+  return {calculated: `${fmt(calc)} ${unit}`, experimental: `${fmt(exp)} ${unit}`, errorPct: err,
+          acceptable: err <= (problem.tolerance ?? 5)};
+}
+
+/* problems/chapman_enskog.py */
+const K_CE = 2.6693e-5, T_STAR_RANGE = [0.3, 100];
+const chapman = {
+  id: "chapman-enskog", title: "1 · Viscosidad de un gas", subtitle: "Método de Chapman-Enskog", tolerance: 5,
+  fields: [
+    field("M", "Peso molecular M", {unit: "g/mol"}),
+    field("sigma", "Diámetro de colisión σ", {unit: "Å"}),
+    field("eps_k", "Energía característica ε/k", {unit: "K"}),
+    field("T", "Temperatura T", {unitGroup: "temperatura"}),
+    field("mu_exp", "Viscosidad experimental", {hint: "Si la llenas, se calcula el % de error.", unitGroup: "viscosidad", optional: true}),
+    field("method", "Integral de colisión Ωμ", {choices: Object.entries(METHODS).map(([k, m]) => [k, m.label])}),
+    field("omega_manual", "Ωμ a mano (opcional)", {hint: "Si lo llenas, reemplaza al método elegido.", optional: true}),
+  ],
+  presets: () => Object.fromEntries(SUBSTANCES.map(([n, M, s, e]) => [n, {M: String(M), sigma: String(s), eps_k: String(e)}])),
+  example: () => ({M: raw("119.38"), sigma: raw("5.389"), eps_k: raw("340.2"), T: raw("300", "°C"),
+                   mu_exp: raw("191", "μP"), method: raw("examen")}),
+  compute(v) {
+    const {M, sigma, eps_k, T, mu_exp} = v;
+    const tStar = T / eps_k, manual = v.omega_manual;
+    if (manual !== null && manual <= 0) throw new ValidationError("«Ωμ a mano» debe ser mayor que cero.");
+    const method = METHODS[v.method];
+    const omega = manual !== null ? manual : method.compute(tStar);
+    const root = Math.sqrt(M * T);
+    const muPoise = K_CE * root / (sigma ** 2 * omega), muPas = muPoise * 0.1;
+    const sol = {
+      results: [{label: "Viscosidad calculada", value: `${fmt(muPoise)} P`, also: [`${fmt(muPas)} Pa·s`, `${fmt(muPoise * 1e6)} μP`]}],
+      steps: [
+        {title: "Paso 1 · Temperatura en kelvin", lines: [`T = ${fmt(T, 6)} K`]},
+        {title: "Paso 2 · Temperatura adimensional", lines: [`T* = T / (ε/k) = ${fmt(T, 6)} / ${fmt(eps_k)} = ${fmt(tStar)}`]},
+        {title: "Paso 3 · Integral de colisión", lines: [manual !== null ? "Ωμ capturado a mano" : method.formula, `Ωμ = ${fmt(omega)}`]},
+        {title: "Paso 4 · Sustitución en la fórmula", lines: [
+          "μ = 2.6693×10⁻⁵ · √(M·T) / (σ²·Ωμ)",
+          `μ = 2.6693×10⁻⁵ · √(${fmt(M)} · ${fmt(T, 6)}) / (${fmt(sigma)}² · ${fmt(omega)})`,
+          `μ = 2.6693×10⁻⁵ · ${fmt(root, 5)} / ${fmt(sigma ** 2 * omega, 5)} = ${fmt(muPoise)} P`]},
+        {title: "Paso 5 · Conversión de unidades", lines: ["1 P = 0.1 Pa·s", `${fmt(muPoise)} × 0.1 = ${fmt(muPas)} Pa·s`]},
+      ],
+      comparison: null, chart: null, warnings: [],
+    };
+    if (!(T_STAR_RANGE[0] <= tStar && tStar <= T_STAR_RANGE[1]))
+      sol.warnings.push(`T* = ${fmt(tStar)} está fuera del rango 0.3 a 100 de la ecuación.`);
+    if (mu_exp !== null) {
+      sol.comparison = comparison(this, muPas, mu_exp, "Pa·s");
+      const e = sol.comparison.errorPct;
+      sol.steps.push({title: "Paso 6 · Porcentaje de error", lines: [
+        "% error = |μcalc − μexp| / μexp × 100",
+        `% error = |${fmt(muPas)} − ${fmt(mu_exp)}| / ${fmt(mu_exp)} × 100 = ${fmt(e, 3)} %`]});
+    }
+    // Curva μ(T) con el mismo método de Ωμ, de 0.6·T a 1.4·T (dentro del rango válido de T*)
+    const lo = Math.max(0.6 * T, T_STAR_RANGE[0] * eps_k), hi = Math.min(1.4 * T, T_STAR_RANGE[1] * eps_k);
+    const pts = [];
+    for (let i = 0; i <= 40; i++) {
+      const t = lo + (hi - lo) * i / 40;
+      pts.push([t, K_CE * Math.sqrt(M * t) / (sigma ** 2 * method.compute(t / eps_k)) * 1e6]);
+    }
+    const markers = [{label: "Calculado", x: T, y: muPoise * 1e6, color: 1}];
+    if (mu_exp !== null) markers.push({label: "Experimental", x: T, y: mu_exp * 10 * 1e6, color: 2});
+    sol.chart = {title: "Viscosidad según la temperatura", xLabel: "T (K)", yLabel: "μ (μP)",
+                 series: [{label: "Chapman-Enskog", points: pts, color: 0}], markers};
+    return sol;
+  },
+};
+
+/* problems/pipe_shear_stress.py */
+const tuberia = {
+  id: "esfuerzo-tuberia", title: "2 · Esfuerzo cortante en tubería", subtitle: "Flujo en tubo circular, coordenadas cilíndricas", tolerance: 5,
+  fields: [
+    field("Pg", "Fuerza motriz Pg", {hint: "Gradiente de presión (más gravedad) que impulsa el flujo.", unitGroup: "gradiente"}),
+    field("R", "Radio interno de la tubería R", {unitGroup: "longitud"}),
+    field("r", "Posición radial r (opcional)", {hint: "Si lo dejas vacío se usa r = R (la pared).", unitGroup: "longitud", optional: true}),
+    field("tau_exp", "Esfuerzo experimental (opcional)", {hint: "Se compara con |τrz| en r.", unitGroup: "esfuerzo", optional: true}),
+  ],
+  presets: () => ({}),
+  example: () => ({Pg: raw("200", "Pa/m"), R: raw("2", "cm"), r: raw("1", "cm")}),
+  compute(v) {
+    const {Pg, R, tau_exp} = v;
+    const r = v.r === null ? R : v.r;
+    if (r > R) throw new ValidationError("r no puede ser mayor que el radio R de la tubería.");
+    const tau = -Pg * r / 2, tauW = Pg * R / 2;
+    const sol = {
+      results: [{label: "Esfuerzo en r", value: `${fmt(tau)} Pa`, also: [`|τrz| = ${fmt(Math.abs(tau))} Pa`]},
+                {label: "Esfuerzo en la pared", value: `${fmt(tauW)} Pa`, also: []}],
+      steps: [
+        {title: "Paso 1 · Balance diferencial", lines: ["(1/r)·d(r·τrz)/dr = −Pg", "d(r·τrz)/dr = −Pg·r"]},
+        {title: "Paso 2 · Integración", lines: ["r·τrz = −Pg·r²/2 + C"]},
+        {title: "Paso 3 · Condición de frontera", lines: ["En r = 0, τrz = 0  →  0 = 0 + C", "C = 0"]},
+        {title: "Paso 4 · Distribución de esfuerzo", lines: ["τrz = −Pg·r / 2",
+          `τrz = −(${fmt(Pg)})(${fmt(r)}) / 2 = ${fmt(tau)} Pa`, `|τrz| = ${fmt(Math.abs(tau))} Pa`]},
+        {title: "Paso 5 · Esfuerzo en la pared (r = R)", lines: ["|τw| = Pg·R / 2",
+          `|τw| = (${fmt(Pg)})(${fmt(R)}) / 2 = ${fmt(tauW)} Pa`]},
+      ],
+      comparison: null, chart: null, warnings: [],
+    };
+    if (tau_exp !== null) {
+      sol.comparison = comparison(this, Math.abs(tau), tau_exp, "Pa");
+      sol.steps.push({title: "Paso 6 · Porcentaje de error", lines: [
+        `% error = |${fmt(Math.abs(tau))} − ${fmt(tau_exp)}| / ${fmt(tau_exp)} × 100 = ${fmt(sol.comparison.errorPct, 3)} %`]});
+    }
+    const [unit, k] = R < 0.01 ? ["mm", 1e3] : R < 1 ? ["cm", 1e2] : ["m", 1];
+    const pts = Array.from({length: 21}, (_, i) => [R * k * i / 20, Pg * R * i / 20 / 2]);
+    const markers = [{label: "Calculado", x: r * k, y: Math.abs(tau), color: 1}];
+    if (tau_exp !== null) markers.push({label: "Experimental", x: r * k, y: tau_exp, color: 2});
+    sol.chart = {title: "Esfuerzo cortante según el radio", xLabel: `r (${unit})`, yLabel: "|τrz| (Pa)",
+                 series: [{label: "|τrz| = Pg·r/2", points: pts, color: 0}], markers};
+    return sol;
+  },
+};
+
+const PROBLEMS = [chapman, tuberia];
+
+/* controller.py */
+function calculate(problem, rawMap) {
+  try { return {solution: problem.compute(parse(problem, rawMap)), error: null}; }
+  catch (e) { if (e instanceof ValidationError) return {solution: null, error: `Error: ${e.message}`}; throw e; }
+}
+/*CORE-END*/
+
+/* ===== Interfaz ===== */
+const $ = id => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else n.setAttribute(k, v);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+};
+const SVGNS = "http://www.w3.org/2000/svg";
+const svg = (tag, attrs = {}) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+
+let current = PROBLEMS[0];
+const state = {};      // datos capturados por problema
+const last = {};       // último resultado por problema
+for (const p of PROBLEMS) state[p.id] = p.example() || {};
+
+function renderTabs() {
+  const tabs = $("tabs"); tabs.replaceChildren();
+  for (const p of PROBLEMS) {
+    const b = el("button", {type: "button", role: "tab", "aria-selected": String(p === current), id: "tab-" + p.id, text: p.title});
+    b.onclick = () => select(p.id);
+    tabs.append(b);
+  }
+  $("subtitulo").textContent = current.subtitle;
+}
+
+function renderForm() {
+  const form = $("form"); form.replaceChildren();
+  const presets = current.presets();
+  if (Object.keys(presets).length) {
+    const s = el("select", {id: "preset", class: "full"}, el("option", {value: "", text: "— Elegir —"}));
+    for (const name of Object.keys(presets)) s.append(el("option", {value: name, text: name}));
+    s.onchange = () => { const v = presets[s.value]; if (v) for (const [k, t] of Object.entries(v)) $("f-" + k).value = t; };
+    form.append(el("div", {class: "field"}, el("label", {for: "preset", text: "Sustancia (opcional)"}), s,
+      el("div", {class: "hint", text: "Autollena los datos de la tabla 11.1; puedes editarlos."})));
+  }
+  for (const f of current.fields) {
+    const id = "f-" + f.key;
+    let control;
+    if (f.choices.length) {
+      control = el("select", {id, class: "full"});
+      for (const [v, t] of f.choices) control.append(el("option", {value: v, text: t}));
+    } else {
+      const input = el("input", {id, inputmode: "decimal", autocomplete: "off", enterkeyhint: "go"});
+      control = el("div", {class: "row"}, input);
+      if (f.unitGroup) {
+        const u = el("select", {id: id + "-u", "aria-label": "Unidad de " + f.label});
+        for (const name of unitsOf(f.unitGroup)) u.append(el("option", {value: name, text: name}));
+        control.append(u);
+      } else if (f.unit) control.append(el("span", {class: "unit", text: f.unit}));
+    }
+    form.append(el("div", {class: "field"}, el("label", {for: id, text: f.label}), control,
+      f.hint ? el("div", {class: "hint", text: f.hint}) : null));
+  }
+  const ej = current.example() ? el("button", {type: "button", id: "ejemplo", text: "Cargar ejemplo"}) : null;
+  const limpiar = el("button", {type: "button", id: "limpiar", text: "Limpiar"});
+  form.append(el("div", {class: "actions"}, el("button", {type: "submit", class: "primary", text: "Calcular"}), ej, limpiar));
+  if (ej) ej.onclick = () => { clearForm(); setRaw(current.example()); };
+  limpiar.onclick = clearForm;
+  setRaw(state[current.id]);
+}
+
+function getRaw() {
+  const out = {};
+  for (const f of current.fields) {
+    const n = $("f-" + f.key), u = $("f-" + f.key + "-u");
+    out[f.key] = raw(n.value, u ? u.value : "");
+  }
+  return out;
+}
+function setRaw(r) {
+  for (const [k, v] of Object.entries(r || {})) {
+    const n = $("f-" + k); if (!n) continue;
+    n.value = v.text;
+    const u = $("f-" + k + "-u"); if (u && v.unit) u.value = v.unit;
+  }
+}
+function clearForm() {
+  for (const f of current.fields) {
+    const n = $("f-" + f.key);
+    n.value = f.choices.length ? f.choices[0][0] : "";
+  }
+  const p = $("preset"); if (p) p.value = "";
+}
+
+function renderChart(spec) {
+  const box = el("div", {class: "chart"});
+  box.append(el("div", {class: "chart-title", text: spec.title}));
+  const legend = el("div", {class: "legend"});
+  for (const it of [...spec.series, ...spec.markers])
+    legend.append(el("span", {}, el("i", {style: `background:var(--g${it.color % 4})`}), it.label));
+  box.append(legend);
+  const W = Math.max(300, Math.round($("salida").clientWidth - 26)), H = 280;
+  const ML = 64, MR = 20, MT = 30, MB = 44;
+  const xs = [...spec.series.flatMap(s => s.points.map(p => p[0])), ...spec.markers.map(m => m.x)];
+  const ys = [...spec.series.flatMap(s => s.points.map(p => p[1])), ...spec.markers.map(m => m.y)];
+  const xt = niceTicks(Math.min(...xs), Math.max(...xs), 5), yt = niceTicks(Math.min(...ys), Math.max(...ys), 4);
+  const [x0, x1, y0, y1] = [xt[0], xt.at(-1), yt[0], yt.at(-1)];
+  const px = x => ML + (x - x0) / (x1 - x0) * (W - ML - MR);
+  const py = y => H - MB - (y - y0) / (y1 - y0) * (H - MB - MT);
+  const s = svg("svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": spec.title});
+  const text = (x, y, t, anchor = "middle") => { const n = svg("text", {x, y, "text-anchor": anchor, "font-size": 13, style: "fill:var(--texto-sec);font-family:var(--sans)"}); n.textContent = t; return n; };
+  for (const t of yt) {
+    s.append(svg("line", {x1: ML, x2: W - MR, y1: py(t), y2: py(t), style: "stroke:var(--separador)"}));
+    s.append(text(ML - 8, py(t) + 4, fmt(t, 3), "end"));
+  }
+  for (const t of xt) s.append(text(px(t), H - MB + 18, fmt(t, 3)));
+  s.append(svg("line", {x1: ML, x2: W - MR, y1: H - MB, y2: H - MB, style: "stroke:var(--borde-control)"}));
+  s.append(svg("line", {x1: ML, x2: ML, y1: MT, y2: H - MB, style: "stroke:var(--borde-control)"}));
+  s.append(text((ML + W - MR) / 2, H - 8, spec.xLabel));
+  s.append(text(4, MT - 12, spec.yLabel, "start"));
+  for (const se of spec.series)
+    s.append(svg("polyline", {points: se.points.map(p => `${px(p[0])},${py(p[1])}`).join(" "),
+      style: `fill:none;stroke:var(--g${se.color % 4});stroke-width:2`}));
+  // El primer marcador (resultado) va relleno y encima; los demás huecos y más grandes, para verse aunque coincidan.
+  spec.markers.map((m, i) => [m, i]).reverse().forEach(([m, i]) => {
+    const r = 5 + 4 * i, cx = px(m.x), cy = py(m.y), c = `var(--g${m.color % 4})`;
+    s.append(svg("rect", {x: cx - r, y: cy - r, width: 2 * r, height: 2 * r,
+      style: i === 0 ? `fill:${c};stroke:var(--fondo);stroke-width:2` : `fill:none;stroke:${c};stroke-width:3`}));
+  });
+  box.append(s);
+  return box;
+}
+
+function display(outcome) {
+  const out = $("salida"); out.replaceChildren();
+  if (!outcome) { out.append(el("div", {class: "empty", text: "Llena los datos y pulsa Calcular. Aquí aparecerán la gráfica, el resultado y los pasos."})); return; }
+  if (outcome.error) { out.append(el("div", {class: "error-box", role: "alert", text: outcome.error})); return; }
+  const sol = outcome.solution;
+  if (sol.chart) out.append(renderChart(sol.chart));
+  const box = el("div", {style: "margin-top:8px"});
+  for (const r of sol.results)
+    box.append(el("div", {class: "res"}, el("div", {class: "label", text: r.label}), el("div", {class: "big", text: r.value}),
+      r.also.length ? el("div", {class: "also", text: "= " + r.also.join("   =   ")}) : null));
+  if (sol.comparison) {
+    const c = sol.comparison;
+    box.append(el("div", {class: "res"}, el("div", {class: "label", text: "Comparación con el dato experimental"}),
+      el("div", {class: "big"}, `${pyG(c.errorPct, 3)} %`,
+        el("span", {class: "tag " + (c.acceptable ? "ok" : "warn"), text: c.acceptable ? "Error bajo" : "Error alto: revisa los datos"})),
+      el("div", {class: "also", text: `${c.calculated} calculado  vs  ${c.experimental} experimental`})));
+  }
+  for (const w of sol.warnings) box.append(el("div", {class: "aviso", text: "Aviso: " + w}));
+  for (const st of sol.steps)
+    box.append(el("div", {class: "step"}, el("h3", {text: st.title}), ...st.lines.map(l => el("div", {class: "eq", text: l}))));
+  out.append(box);
+}
+
+function select(id) {
+  state[current.id] = getRaw();
+  current = PROBLEMS.find(p => p.id === id);
+  renderTabs(); renderForm(); display(last[current.id]);
+}
+
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();  // cierra el teclado del celular
+  state[current.id] = getRaw();
+  last[current.id] = calculate(current, state[current.id]);
+  display(last[current.id]);
+  if (window.innerWidth < 900) $("t-res").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+});
+let lastW = window.innerWidth;
+window.addEventListener("resize", () => { if (window.innerWidth !== lastW) { lastW = window.innerWidth; display(last[current.id]); } });
+
+/* Tema claro / oscuro */
+function setTema(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  $("tema").textContent = t === "dark" ? "Tema claro" : "Tema oscuro";
+  try { localStorage.setItem("tema", t); } catch (_) {}
+}
+(() => { let t = null; try { t = localStorage.getItem("tema"); } catch (_) {}
+  if (t) setTema(t); else $("tema").textContent = matchMedia("(prefers-color-scheme: dark)").matches ? "Tema claro" : "Tema oscuro"; })();
+$("tema").onclick = () => {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark" ||
+    (!document.documentElement.hasAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  setTema(dark ? "light" : "dark");
+};
+
+/* Abre con el ejemplo del examen ya resuelto */
+renderTabs(); renderForm();
+last[current.id] = calculate(current, state[current.id]);
+display(last[current.id]);
+</script>
+</body>
+</html>
