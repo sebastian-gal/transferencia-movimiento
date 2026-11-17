@@ -43,9 +43,9 @@
 html{background:var(--fondo)}
 body{margin:0;background:var(--fondo);color:var(--texto);font-family:var(--sans);font-size:18px;line-height:1.5;-webkit-text-size-adjust:100%}
 .wrap{max-width:1180px;margin:0 auto;padding-block:0 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-block:28px 14px;border-bottom:1px solid var(--separador);flex-wrap:wrap}
-h1{font-family:var(--serif);font-weight:600;margin:0;line-height:1.15;font-size:clamp(28px,5vw,44px);text-wrap:balance}
-.sub{font-size:20px;margin:6px 0 0;color:var(--texto-sec)}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:14px 10px;border-bottom:1px solid var(--separador);flex-wrap:wrap}
+h1{font-family:var(--serif);font-weight:600;margin:0;line-height:1.15;font-size:clamp(26px,3vw,34px);text-wrap:balance}
+.sub{font-size:17px;margin:2px 0 0;color:var(--texto-sec)}
 .label{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-sec)}
 button{font:inherit;font-weight:600;font-size:17px;min-height:44px;padding:8px 16px;cursor:pointer;border:1px solid var(--separador);background:var(--superficie);color:var(--texto)}
 button:hover{border-color:var(--borde-control)}
@@ -53,8 +53,8 @@ button.primary{background:var(--acento);color:var(--sobre-acento);border-color:v
 button.primary:hover{background:var(--acento-hover);border-color:var(--acento-hover)}
 button[aria-selected="true"]{background:var(--acento);color:var(--sobre-acento);border-color:var(--acento)}
 :focus-visible{outline:2px solid var(--foco);outline-offset:2px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;margin-top:20px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;margin-top:14px}
 @media(min-width:900px){main{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
 section{min-width:0}
 form{background:var(--superficie);border:1px solid var(--separador);padding:16px;margin-top:8px;display:grid;gap:12px}
@@ -72,7 +72,9 @@ select{flex:0 0 auto}
 .row select{padding-inline:4px}
 select.full{width:100%}
 .unit{flex:0 0 auto;font-size:14px;color:var(--texto-sec)}
-.actions{display:flex;gap:10px;flex-wrap:wrap}
+/* Botones fijos abajo mientras se ve el formulario, en cualquier tamaño de pantalla */
+.actions{display:flex;gap:10px;flex-wrap:wrap;position:sticky;bottom:0;z-index:2;background:var(--superficie);
+  margin:0 -16px -16px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--separador)}
 .empty{color:var(--texto-sec);border:1px solid var(--separador);padding:20px;margin-top:10px}
 .error-box{margin-top:10px;padding:14px 16px;border:1px solid var(--error);color:var(--error);font-weight:600}
 .chart{margin-top:10px;border:1px solid var(--separador);background:var(--fondo);padding:12px 12px 4px}
@@ -103,9 +105,7 @@ footer{margin-top:40px;padding-top:12px;border-top:1px solid var(--separador);fo
   .tabs button{font-size:15px;padding:6px 8px;line-height:1.2}
   main{margin-top:12px;gap:20px}
   form{padding:12px;gap:10px}
-  .actions{position:sticky;bottom:0;z-index:2;background:var(--superficie);margin:0 -12px -12px;
-    padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--separador)}
-  .actions{flex-wrap:nowrap;gap:8px}
+  .actions{margin:0 -12px -12px;padding-inline:12px;flex-wrap:nowrap;gap:8px}
   .actions button{flex:1 1 0;min-width:0;min-height:44px;padding-inline:6px}
   .actions .primary{flex-grow:1.4}
 }
