@@ -438,9 +438,51 @@ function renderForm() {
   const ej = current.example() ? el("button", {type: "button", id: "ejemplo", text: "Ejemplo"}) : null;
   const limpiar = el("button", {type: "button", id: "limpiar", text: "Limpiar"});
   form.append(el("div", {class: "actions"}, el("button", {type: "submit", class: "primary", text: "Calcular"}), ej, limpiar));
-  if (ej) ej.onclick = () => { clearForm(); setRaw(current.example()); };
+  if (ej) ej.onclick = () => {
+    clearForm();
+    const ex = randomExample(current);
+    setRaw(ex.raw);
+    if (ex.preset && $("preset")) $("preset").value = ex.preset;
+    $("form").requestSubmit();
+  };
   limpiar.onclick = clearForm;
   setRaw(state[current.id]);
+}
+
+/* Ejemplos al azar para el botón «Ejemplo». No se inventan datos experimentales:
+   solo el ejemplo del examen (datos reales) trae viscosidad experimental. */
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const between = (lo, hi) => lo + Math.random() * (hi - lo);
+const RANDOM_EXAMPLES = {
+  "chapman-enskog"() {
+    if (Math.random() < 0.2) return {raw: chapman.example(), preset: "Cloroformo"};
+    const [name, M, sigma, eps] = pick(SUBSTANCES);
+    // T dentro del rango válido 0.3 ≤ T* ≤ 100, entre 250 K y 1000 K cuando se puede
+    const lo = Math.max(250, 0.35 * eps), hi = Math.max(lo + 50, Math.min(1000, 90 * eps));
+    const tK = between(lo, hi);
+    const T = Math.random() < 0.5 ? raw(String(Math.round(tK - 273.15)), "°C") : raw(String(Math.round(tK)), "K");
+    return {raw: {M: raw(String(M)), sigma: raw(String(sigma)), eps_k: raw(String(eps)), T,
+                  mu_exp: raw("", "μP"), method: raw(pick(Object.keys(METHODS))), omega_manual: raw("")},
+            preset: name};
+  },
+  "esfuerzo-tuberia"() {
+    const pg = Math.round(between(50, 5000) / 10) * 10;                       // Pa/m
+    const Pg = Math.random() < 0.3 ? raw(String(+(pg / 1000).toFixed(2)), "kPa/m") : raw(String(pg), "Pa/m");
+    const [unit, R, dec] = pick([["cm", +between(0.5, 10).toFixed(1), 1], ["mm", Math.round(between(5, 50)), 0],
+                                 ["m", +between(0.05, 0.5).toFixed(2), 2]]);
+    const rv = +(R * between(0.1, 1)).toFixed(dec);
+    const r = Math.random() < 0.25 || rv <= 0 ? raw("", unit) : raw(String(Math.min(rv, R)), unit);
+    return {raw: {Pg, R: raw(String(R), unit), r, tau_exp: raw("", "Pa")}};
+  },
+};
+const lastExample = {};
+function randomExample(problem) {
+  const gen = RANDOM_EXAMPLES[problem.id];
+  if (!gen) return {raw: problem.example()};
+  let ex, key, tries = 0;
+  do { ex = gen(); key = JSON.stringify(ex.raw); } while (key === lastExample[problem.id] && ++tries < 10);
+  lastExample[problem.id] = key;
+  return ex;
 }
 
 function getRaw() {
