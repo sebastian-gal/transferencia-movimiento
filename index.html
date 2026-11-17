@@ -57,16 +57,21 @@ button[aria-selected="true"]{background:var(--acento);color:var(--sobre-acento);
 main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;margin-top:20px}
 @media(min-width:900px){main{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
 section{min-width:0}
-form{background:var(--superficie);border:1px solid var(--separador);padding:20px;margin-top:10px;display:grid;gap:16px}
-.field{display:grid;gap:4px;min-width:0}
-.field>label{font-weight:600;font-size:17px}
-.hint{font-size:14px;color:var(--texto-sec)}
-.row{display:flex;gap:8px;align-items:center;min-width:0}
-input,select{font:inherit;font-size:17px;color:var(--texto);background:var(--fondo);border:1px solid var(--borde-control);padding:8px 10px;min-height:44px;min-width:0}
+form{background:var(--superficie);border:1px solid var(--separador);padding:16px;margin-top:8px;display:grid;gap:12px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field>label{font-weight:600;font-size:16px;line-height:1.25}
+/* Parejas: etiqueta, caja y ayuda en filas compartidas, así las cajas quedan a la misma altura */
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto auto;gap:3px 12px}
+.pair .field{display:grid;grid-row:span 3;grid-template-rows:subgrid;gap:3px}
+.pair .field>label{align-self:end}
+.hint{font-size:13px;line-height:1.3;color:var(--texto-sec)}
+.row{display:flex;gap:6px;align-items:center;min-width:0}
+input,select{font:inherit;font-size:16px;color:var(--texto);background:var(--fondo);border:1px solid var(--borde-control);padding:7px 9px;min-height:42px;min-width:0}
 input{width:100%;flex:1 1 auto;font-variant-numeric:tabular-nums}
 select{flex:0 0 auto}
+.row select{padding-inline:4px}
 select.full{width:100%}
-.unit{flex:0 0 auto;font-size:15px;color:var(--texto-sec);min-width:44px}
+.unit{flex:0 0 auto;font-size:14px;color:var(--texto-sec)}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .empty{color:var(--texto-sec);border:1px solid var(--separador);padding:20px;margin-top:10px}
 .error-box{margin-top:10px;padding:14px 16px;border:1px solid var(--error);color:var(--error);font-weight:600}
@@ -88,7 +93,26 @@ select.full{width:100%}
 .eq{font-family:var(--mono);font-size:15px;line-height:1.6;overflow-x:auto;white-space:pre;padding-block:2px;font-variant-numeric:tabular-nums}
 .note{font-size:14px;color:var(--texto-sec);margin-top:8px}
 footer{margin-top:40px;padding-top:12px;border-top:1px solid var(--separador);font-size:14px;color:var(--texto-sec)}
-@media(max-width:520px){body{font-size:17px} form{padding:16px}}
+/* Celular: encabezado compacto y botón Calcular siempre a la vista mientras se llena el formulario */
+@media(max-width:899px){
+  header{padding-block:12px 8px;gap:10px;align-items:center;flex-wrap:nowrap}
+  h1{font-size:22px}
+  .sub{display:none}          /* la pestaña ya dice qué problema es */
+  #tema{flex:0 0 auto;min-height:36px;font-size:14px;padding:4px 10px}
+  .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
+  .tabs button{font-size:15px;padding:6px 8px;line-height:1.2}
+  main{margin-top:12px;gap:20px}
+  form{padding:12px;gap:10px}
+  .actions{position:sticky;bottom:0;z-index:2;background:var(--superficie);margin:0 -12px -12px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--separador)}
+  .actions{flex-wrap:nowrap;gap:8px}
+  .actions button{flex:1 1 0;min-width:0;min-height:44px;padding-inline:6px}
+  .actions .primary{flex-grow:1.4}
+}
+@media(max-width:360px){
+  .pair{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .pair .field{grid-row:auto;display:flex}
+}
 </style>
 </head>
 <body>
@@ -236,9 +260,9 @@ const chapman = {
     field("sigma", "Diámetro de colisión σ", {unit: "Å"}),
     field("eps_k", "Energía característica ε/k", {unit: "K"}),
     field("T", "Temperatura T", {unitGroup: "temperatura"}),
-    field("mu_exp", "Viscosidad experimental", {hint: "Si la llenas, se calcula el % de error.", unitGroup: "viscosidad", optional: true}),
+    field("mu_exp", "Viscosidad experimental", {hint: "Opcional: da el % de error.", unitGroup: "viscosidad", optional: true}),
     field("method", "Integral de colisión Ωμ", {choices: Object.entries(METHODS).map(([k, m]) => [k, m.label])}),
-    field("omega_manual", "Ωμ a mano (opcional)", {hint: "Si lo llenas, reemplaza al método elegido.", optional: true}),
+    field("omega_manual", "Ωμ a mano (opcional)", {hint: "Reemplaza al método elegido.", optional: true}),
   ],
   presets: () => Object.fromEntries(SUBSTANCES.map(([n, M, s, e]) => [n, {M: String(M), sigma: String(s), eps_k: String(e)}])),
   example: () => ({M: raw("119.38"), sigma: raw("5.389"), eps_k: raw("340.2"), T: raw("300", "°C"),
@@ -293,9 +317,9 @@ const chapman = {
 const tuberia = {
   id: "esfuerzo-tuberia", title: "2 · Esfuerzo cortante en tubería", subtitle: "Flujo en tubo circular, coordenadas cilíndricas", tolerance: 5,
   fields: [
-    field("Pg", "Fuerza motriz Pg", {hint: "Gradiente de presión (más gravedad) que impulsa el flujo.", unitGroup: "gradiente"}),
+    field("Pg", "Fuerza motriz Pg", {hint: "Gradiente de presión (+ gravedad).", unitGroup: "gradiente"}),
     field("R", "Radio interno de la tubería R", {unitGroup: "longitud"}),
-    field("r", "Posición radial r (opcional)", {hint: "Si lo dejas vacío se usa r = R (la pared).", unitGroup: "longitud", optional: true}),
+    field("r", "Posición radial r (opcional)", {hint: "Vacío = pared (r = R).", unitGroup: "longitud", optional: true}),
     field("tau_exp", "Esfuerzo experimental (opcional)", {hint: "Se compara con |τrz| en r.", unitGroup: "esfuerzo", optional: true}),
   ],
   presets: () => ({}),
@@ -356,6 +380,10 @@ const el = (tag, attrs = {}, ...kids) => {
 const SVGNS = "http://www.w3.org/2000/svg";
 const svg = (tag, attrs = {}) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
 
+const LAYOUT = {
+  "chapman-enskog": [["M", "sigma"], ["eps_k", "T"], ["method"], ["mu_exp", "omega_manual"]],
+  "esfuerzo-tuberia": [["Pg", "R"], ["r", "tau_exp"]],
+};
 let current = PROBLEMS[0];
 const state = {};      // datos capturados por problema
 const last = {};       // último resultado por problema
@@ -379,8 +407,9 @@ function renderForm() {
     for (const name of Object.keys(presets)) s.append(el("option", {value: name, text: name}));
     s.onchange = () => { const v = presets[s.value]; if (v) for (const [k, t] of Object.entries(v)) $("f-" + k).value = t; };
     form.append(el("div", {class: "field"}, el("label", {for: "preset", text: "Sustancia (opcional)"}), s,
-      el("div", {class: "hint", text: "Autollena los datos de la tabla 11.1; puedes editarlos."})));
+      el("div", {class: "hint", text: "Autollena M, σ y ε/k (tabla 11.1); puedes editarlos."})));
   }
+  const nodes = {};
   for (const f of current.fields) {
     const id = "f-" + f.key;
     let control;
@@ -396,10 +425,17 @@ function renderForm() {
         control.append(u);
       } else if (f.unit) control.append(el("span", {class: "unit", text: f.unit}));
     }
-    form.append(el("div", {class: "field"}, el("label", {for: id, text: f.label}), control,
-      f.hint ? el("div", {class: "hint", text: f.hint}) : null));
+    nodes[f.key] = el("div", {class: "field"}, el("label", {for: id, text: f.label}), control,
+      f.hint ? el("div", {class: "hint", text: f.hint}) : null);
   }
-  const ej = current.example() ? el("button", {type: "button", id: "ejemplo", text: "Cargar ejemplo"}) : null;
+  // Campos en parejas para que el formulario quepa en la pantalla del celular
+  for (const group of LAYOUT[current.id] || []) {
+    const items = group.map(k => nodes[k]).filter(Boolean);
+    group.forEach(k => delete nodes[k]);
+    if (items.length) form.append(items.length > 1 ? el("div", {class: "pair"}, ...items) : items[0]);
+  }
+  for (const n of Object.values(nodes)) form.append(n);   // problemas sin acomodo propio: uno debajo de otro
+  const ej = current.example() ? el("button", {type: "button", id: "ejemplo", text: "Ejemplo"}) : null;
   const limpiar = el("button", {type: "button", id: "limpiar", text: "Limpiar"});
   form.append(el("div", {class: "actions"}, el("button", {type: "submit", class: "primary", text: "Calcular"}), ej, limpiar));
   if (ej) ej.onclick = () => { clearForm(); setRaw(current.example()); };
